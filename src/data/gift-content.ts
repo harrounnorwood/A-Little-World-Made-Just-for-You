@@ -22,14 +22,14 @@ export type LetterItem = {
 
 export const giftContent = {
   websiteTitle: "Everglow",
-  recipientName: "Maya",
+  recipientName: "Wifey",
   senderName: "Your favorite person",
   welcomeGreeting: "A little world made just for you",
   intro: "A tiny collection of music, memories, flowers, and words that make my heart feel full.",
   playlistTitle: "Songs That Remind Me of You",
   playlistDescription: "Add your Spotify or YouTube playlist link here when your perfect soundtrack is ready.",
   playlistUrl: "",
-  finalHeadline: "Happy Birthday, Maya!",
+  finalHeadline: "Happy Birthday, Wifey!",
   finalMessage: "May this next chapter glow as brightly as you do. Thank you for being wonderfully, unmistakably you.",
   photos: [
     { image: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=900&q=85", caption: "The kind of smile that makes ordinary days sparkle.", alt: "Pink roses in soft light", rotation: -3, tone: "rose" },
