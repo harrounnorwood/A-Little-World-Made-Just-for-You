@@ -21,7 +21,7 @@ export type LetterItem = {
 };
 
 export const giftContent = {
-  websiteTitle: "Everglow",
+  websiteTitle: "Haezel ♡",
   senderName: "Haezel",
   recipientName: "[Recipient name]",
   recipientNickname: "Wifey",
