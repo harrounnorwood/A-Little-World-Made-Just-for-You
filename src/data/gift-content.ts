@@ -29,8 +29,8 @@ export const giftContent = {
   welcomeGreeting: "A little world made just for you",
   intro: "A little birthday surprise made just for you.",
   playlistTitle: "Songs That Remind Me of You",
-  playlistDescription: "Add your Spotify or YouTube playlist link here when your perfect soundtrack is ready.",
-  playlistUrl: "",
+  playlistDescription: "A soundtrack for this little birthday world.",
+  playlistUrl: "https://open.spotify.com/playlist/22CHRCHAFPxIkNdwI9Rgl4",
   finalHeadline: "Happy Birthday, {nickname}!",
   finalMessage: "[Add your personal birthday message here.]",
   photos: [

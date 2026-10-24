@@ -115,8 +115,30 @@ function SectionHeader({ title, kicker, onBack }: { title: string; kicker: strin
 }
 
 function MusicSection({ onBack }: { onBack: () => void }) {
-  const validUrl = giftContent.playlistUrl.trim();
-  return <PageTransition className="content-page"><SectionHeader title={giftContent.playlistTitle} kicker="♪ your soundtrack" onBack={onBack} /><div className="music-layout"><div className="record-art"><div className="record"><div className="record-label"><Heart size={25} fill="currentColor" /></div></div><span className="record-caption">side A · memories in melody</span></div><div className="music-copy"><p className="lead">{giftContent.playlistDescription}</p>{validUrl ? <div className="embed-wrap"><iframe title="Romantic playlist" src={validUrl} allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" /></div> : <div className="playlist-placeholder"><Music2 size={28} /><strong>Your playlist will live here</strong><span>Paste a Spotify or YouTube embed URL in <code>src/data/gift-content.ts</code>.</span></div>}<a className="text-link" href={validUrl || "#"} onClick={(event) => !validUrl && event.preventDefault()} target="_blank" rel="noreferrer">{validUrl ? "Open playlist in a new tab →" : "Add your playlist link to enable this"}</a></div></div></PageTransition>;
+  const playlistUrl = giftContent.playlistUrl.trim();
+  let embedUrl: string | null = null;
+  let externalUrl: string | null = null;
+
+  try {
+    const url = new URL(playlistUrl);
+    if (url.protocol === "https:" && url.hostname === "open.spotify.com") {
+      const spotifyPlaylist = url.pathname.match(/^\/playlist\/([^/]+)\/?$/);
+      if (spotifyPlaylist) {
+        embedUrl = `https://open.spotify.com/embed/playlist/${spotifyPlaylist[1]}`;
+        externalUrl = url.href;
+      }
+    } else if (url.protocol === "https:" && (url.hostname === "youtube.com" || url.hostname === "www.youtube.com")) {
+      const playlistId = url.searchParams.get("list");
+      if (url.pathname === "/playlist" && playlistId) {
+        embedUrl = `https://www.youtube.com/embed?list=${encodeURIComponent(playlistId)}`;
+        externalUrl = url.href;
+      }
+    }
+  } catch {
+    if (playlistUrl) console.error("Invalid playlist URL in gift-content.ts");
+  }
+
+  return <PageTransition className="content-page"><SectionHeader title={giftContent.playlistTitle} kicker="♪ your soundtrack" onBack={onBack} /><div className="music-layout"><div className="record-art"><div className="record"><div className="record-label"><Heart size={25} fill="currentColor" /></div></div><span className="record-caption">side A · memories in melody</span></div><div className="music-copy"><p className="lead">{giftContent.playlistDescription}</p>{embedUrl ? <div className="embed-wrap"><iframe title="Romantic playlist" src={embedUrl} allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" /></div> : <div className="playlist-placeholder"><Music2 size={28} /><strong>Your playlist will live here</strong><span>Add a valid Spotify or YouTube playlist URL in <code>src/data/gift-content.ts</code>.</span></div>}{externalUrl && <a className="text-link" href={externalUrl} target="_blank" rel="noreferrer">Open playlist in a new tab →</a>}</div></div></PageTransition>;
 }
 
 function FlowersSection({ onBack, onSelect }: { onBack: () => void; onSelect: (flower: FlowerItem) => void }) {
