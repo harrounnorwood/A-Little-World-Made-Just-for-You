@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Cake, Camera, ChevronRight, Flower2, Gift, Heart, Mail, Music2, Pause, Play, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Cake, Camera, ChevronRight, Eye, EyeOff, Flower2, Gift, Heart, Mail, Music2, Pause, Play, RotateCcw, Sparkles, X } from "lucide-react";
 import { giftContent, type FlowerItem, type PhotoItem } from "../src/data/gift-content";
 
 type Section = "menu" | "music" | "flowers" | "pictures" | "messages" | "surprise";
+
+function formatBirthdayPasscode(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 6);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4)}`;
+}
 
 const cardData = [
   { id: "music" as const, title: "Music", subtitle: "Our little soundtrack", icon: Music2, className: "card-music" },
@@ -15,6 +22,8 @@ const cardData = [
 ];
 
 export default function Home() {
+  const [passcode, setPasscode] = useState("");
+  const [passcodeError, setPasscodeError] = useState("");
   const [started, setStarted] = useState(false);
   const [section, setSection] = useState<Section>("menu");
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
@@ -23,13 +32,22 @@ export default function Home() {
   const [replayKey, setReplayKey] = useState(0);
 
   const goMenu = () => { setSection("menu"); setSelectedPhoto(null); setSelectedFlower(null); setOpenedLetter(null); };
+  const openGift = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (passcode.replace(/\D/g, "") === giftContent.accessPasscode.replace(/\D/g, "")) {
+      setPasscodeError("");
+      setStarted(true);
+      return;
+    }
+    setPasscodeError("That code didn’t unlock the gift. Try again.");
+  };
 
   return (
     <main className={section === "surprise" ? "app-shell surprise-shell" : "app-shell"}>
       <Decorations />
       <AnimatePresence mode="wait">
         {!started ? (
-          <WelcomeScreen key="welcome" onStart={() => setStarted(true)} />
+          <WelcomeScreen key="welcome" passcode={passcode} error={passcodeError} onChange={(value) => { setPasscode(value); setPasscodeError(""); }} onSubmit={openGift} />
         ) : section === "menu" ? (
           <Menu key="menu" onNavigate={setSection} />
         ) : section === "music" ? (
@@ -56,7 +74,9 @@ function PageTransition({ children, className = "" }: { children: React.ReactNod
   return <motion.div className={`page ${className}`} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.45 }}>{children}</motion.div>;
 }
 
-function WelcomeScreen({ onStart }: { onStart: () => void }) {
+function WelcomeScreen({ passcode, error, onChange, onSubmit }: { passcode: string; error: string; onChange: (value: string) => void; onSubmit: (event: React.FormEvent<HTMLFormElement>) => void }) {
+  const [showPasscode, setShowPasscode] = useState(false);
+
   return <PageTransition className="welcome-page">
     <div className="eyebrow"><Sparkles size={15} /> A birthday gift for {giftContent.recipientNickname}</div>
     <motion.div className="hero-gift" animate={{ y: [0, -8, 0], rotate: [-2, 2, -2] }} transition={{ repeat: Infinity, duration: 4 }}>
@@ -65,8 +85,18 @@ function WelcomeScreen({ onStart }: { onStart: () => void }) {
     <p className="script-text">for someone very special</p>
     <h1>{giftContent.welcomeGreeting}</h1>
     <p className="lead">{giftContent.intro}</p>
-    <button className="primary-button" onClick={onStart}>Open Your Gift <Heart size={17} fill="currentColor" /></button>
-    <p className="small-note">made with love by {giftContent.senderName}</p>
+    <form className="welcome-passcode-form" onSubmit={onSubmit}>
+      <label htmlFor="birthday-passcode">Enter your birthday to open your gift</label>
+      <div className="passcode-input-wrap">
+        <input id="birthday-passcode" type={showPasscode ? "text" : "password"} inputMode="numeric" autoComplete="off" maxLength={8} placeholder="MM-DD-YY" value={passcode} onChange={(event) => onChange(formatBirthdayPasscode(event.target.value))} aria-describedby={error ? "passcode-error" : undefined} aria-invalid={Boolean(error)} />
+        <button className="passcode-visibility" type="button" onClick={() => setShowPasscode((visible) => !visible)} aria-label={showPasscode ? "Hide passcode" : "Show passcode"} aria-pressed={showPasscode}>
+          {showPasscode ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+      {error && <p className="passcode-error" id="passcode-error" role="alert">{error}</p>}
+      <button className="primary-button" type="submit">Open Your Gift <Heart size={17} fill="currentColor" /></button>
+    </form>
+    <p className="small-note">made with love by {giftContent.senderName} ♡</p>
   </PageTransition>;
 }
 

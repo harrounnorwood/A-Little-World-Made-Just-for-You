@@ -25,6 +25,7 @@ export const giftContent = {
   senderName: "Haezel",
   recipientName: "[Recipient name]",
   recipientNickname: "Wifey",
+  accessPasscode: "10-29-07",
   welcomeGreeting: "A little world made just for you",
   intro: "A little birthday surprise made just for you.",
   playlistTitle: "Songs That Remind Me of You",
