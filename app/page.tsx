@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ArrowLeft, ArrowRight, Cake, Camera, ChevronRight, Eye, EyeOff, Expand, Flower2, Gift, Heart, Mail, Music2, Pause, Play, RotateCcw, Sparkles, X } from "lucide-react";
 import { giftContent, type FlowerItem, type PhotoItem } from "../src/data/gift-content";
@@ -32,12 +32,12 @@ export default function Home() {
   const [passcodeError, setPasscodeError] = useState("");
   const [started, setStarted] = useState(false);
   const [section, setSection] = useState<Section>("menu");
-  const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
   const [selectedFlower, setSelectedFlower] = useState<FlowerItem | null>(null);
   const [openedLetter, setOpenedLetter] = useState<number | null>(null);
   const [replayKey, setReplayKey] = useState(0);
 
-  const goMenu = () => { setSection("menu"); setSelectedPhoto(null); setSelectedFlower(null); setOpenedLetter(null); };
+  const goMenu = () => { setSection("menu"); setSelectedPhotoIndex(null); setSelectedFlower(null); setOpenedLetter(null); };
   const openGift = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (passcode.replace(/\D/g, "") === giftContent.accessPasscode.replace(/\D/g, "")) {
@@ -61,7 +61,7 @@ export default function Home() {
         ) : section === "flowers" ? (
           <FlowersSection key="flowers" onBack={goMenu} onSelect={setSelectedFlower} />
         ) : section === "pictures" ? (
-          <PicturesSection key="pictures" onBack={goMenu} onSelect={setSelectedPhoto} />
+          <PicturesSection key="pictures" onBack={goMenu} onSelect={(photo) => setSelectedPhotoIndex(giftContent.photos.indexOf(photo))} />
         ) : section === "messages" ? (
           <MessagesSection key="messages" onBack={goMenu} openedLetter={openedLetter} setOpenedLetter={setOpenedLetter} />
         ) : (
@@ -69,7 +69,7 @@ export default function Home() {
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {selectedPhoto && <PhotoLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />}
+        {selectedPhotoIndex !== null && <PhotoLightbox photos={giftContent.photos} index={selectedPhotoIndex} onNavigate={setSelectedPhotoIndex} onClose={() => setSelectedPhotoIndex(null)} />}
         {selectedFlower && <FlowerModal flower={selectedFlower} onClose={() => setSelectedFlower(null)} />}
       </AnimatePresence>
     </main>
@@ -216,8 +216,29 @@ function BirthdayReveal({ onBack, onReplay }: { onBack: () => void; onReplay: ()
   return <PageTransition className="reveal-page"><div className="reveal-stars" /><div className="confetti" aria-hidden="true">✦　♡　✧　✦　♡　✧</div><button className="reveal-back" onClick={onBack}><ArrowLeft size={16} /> Main menu</button><motion.div className="led-copy" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 1.1, type: "spring" }}><p className="eyebrow"><Cake size={15} /> today is all about you</p><h2>{finalHeadline}</h2><div className="led-line" /><p className="final-message">{giftContent.finalMessage}</p><p className="reveal-signature">With love, {giftContent.senderName} ♡</p></motion.div><div className="reveal-actions"><button className="outline-button" onClick={onReplay}><RotateCcw size={16} /> Replay reveal</button><button className="primary-button" onClick={onBack}>Keep exploring <Heart size={16} fill="currentColor" /></button></div></PageTransition>;
 }
 
-function PhotoLightbox({ photo, onClose }: { photo: PhotoItem; onClose: () => void }) {
-  return <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}><motion.div className="lightbox" initial={{ scale: 0.9, y: 12 }} animate={{ scale: 1, y: 0 }} onClick={(event) => event.stopPropagation()}><button className="close-button" onClick={onClose} aria-label="Close photo"><X /></button><img src={photo.image} alt={photo.alt} /><p>{photo.caption}</p></motion.div></motion.div>;
+function PhotoLightbox({ photos, index, onNavigate, onClose }: { photos: PhotoItem[]; index: number; onNavigate: (index: number) => void; onClose: () => void }) {
+  const pointerStart = useRef<number | null>(null);
+  const photo = photos[index];
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") onNavigate(Math.max(0, index - 1));
+      if (event.key === "ArrowRight") onNavigate(Math.min(photos.length - 1, index + 1));
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [index, onNavigate, photos.length]);
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (pointerStart.current === null) return;
+    const distance = event.clientX - pointerStart.current;
+    pointerStart.current = null;
+    if (Math.abs(distance) > 45) {
+      onNavigate(Math.max(0, Math.min(photos.length - 1, index + (distance < 0 ? 1 : -1))));
+    }
+  };
+
+  return <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}><motion.div className="lightbox" initial={{ scale: 0.9, y: 12 }} animate={{ scale: 1, y: 0 }} onClick={(event) => event.stopPropagation()}><button className="close-button" onClick={onClose} aria-label="Close photo"><X /></button><div className="lightbox-image-wrap" onPointerDown={(event) => { pointerStart.current = event.clientX; }} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }}><AnimatePresence mode="wait" initial={false}><motion.img key={index} src={photo.image} alt={photo.alt} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.2 }} /></AnimatePresence><button className="lightbox-nav lightbox-previous" onClick={() => onNavigate(Math.max(0, index - 1))} disabled={index === 0} aria-label="Previous photo"><ArrowLeft /></button><button className="lightbox-nav lightbox-next" onClick={() => onNavigate(Math.min(photos.length - 1, index + 1))} disabled={index === photos.length - 1} aria-label="Next photo"><ArrowRight /></button></div><p>{photo.caption}</p><span className="lightbox-counter">{index + 1} / {photos.length}</span></motion.div></motion.div>;
 }
 
 function FlowerModal({ flower, onClose }: { flower: FlowerItem; onClose: () => void }) {
