@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Cake, Camera, ChevronRight, Eye, EyeOff, Flower2, Gift, Heart, Mail, Music2, Pause, Play, RotateCcw, Sparkles, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
+import { ArrowLeft, ArrowRight, Cake, Camera, ChevronRight, Eye, EyeOff, Expand, Flower2, Gift, Heart, Mail, Music2, Pause, Play, RotateCcw, Sparkles, X } from "lucide-react";
 import { giftContent, type FlowerItem, type PhotoItem } from "../src/data/gift-content";
 
 type Section = "menu" | "music" | "flowers" | "pictures" | "messages" | "surprise";
+
+const storyPageVariants: Variants = {
+  enter: (direction: number = 1) => ({ opacity: 0, x: direction * 35, rotateY: direction * -4 }),
+  center: { opacity: 1, x: 0, rotateY: 0 },
+  exit: (direction: number = 1) => ({ opacity: 0, x: direction * -35, rotateY: direction * 4 }),
+};
 
 function formatBirthdayPasscode(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 6);
@@ -147,7 +153,58 @@ function FlowersSection({ onBack, onSelect }: { onBack: () => void; onSelect: (f
 }
 
 function PicturesSection({ onBack, onSelect }: { onBack: () => void; onSelect: (photo: PhotoItem) => void }) {
-  return <PageTransition className="content-page"><SectionHeader title="Little moments" kicker="♡ the scrapbook" onBack={onBack} /><p className="section-lead">Sample snapshots for now — replace them with your favorite memories whenever you&apos;re ready.</p><div className="polaroid-grid">{giftContent.photos.map((photo) => <motion.button key={photo.caption} className={`polaroid ${photo.tone}`} style={{ "--rotation": `${photo.rotation}deg` } as React.CSSProperties} onClick={() => onSelect(photo)} whileHover={{ scale: 1.04, rotate: 0, zIndex: 2 }}><span className="tape" /><img src={photo.image} alt={photo.alt} /><span className="polaroid-caption">{photo.caption}</span></motion.button>)}</div></PageTransition>;
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const pointerStart = useRef<number | null>(null);
+  const suppressClick = useRef(false);
+  const photos = giftContent.photos;
+  const currentPhoto = photos[currentIndex];
+
+  const goToPage = (nextIndex: number) => {
+    if (nextIndex < 0 || nextIndex >= photos.length || nextIndex === currentIndex) return;
+    setDirection(nextIndex > currentIndex ? 1 : -1);
+    setCurrentIndex(nextIndex);
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (pointerStart.current === null) return;
+    const distance = event.clientX - pointerStart.current;
+    pointerStart.current = null;
+    if (Math.abs(distance) > 45) {
+      suppressClick.current = true;
+      goToPage(currentIndex + (distance < 0 ? 1 : -1));
+    }
+  };
+
+  const handlePageClick = () => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+    goToPage(currentIndex + 1);
+  };
+
+  return <PageTransition className="content-page"><SectionHeader title="Little moments of you" kicker="♡ the scrapbook" onBack={onBack} /><p className="section-lead">Turn each page and take your time with the memories.</p><section className="storybook" aria-label="Photo storybook">
+    <div className="storybook-book">
+      <span className="storybook-spine" aria-hidden="true" />
+      <div className="storybook-page-number">MEMORY {String(currentIndex + 1).padStart(2, "0")} <span>OF {String(photos.length).padStart(2, "0")}</span></div>
+      <AnimatePresence mode="wait" initial={false} custom={direction}>
+        <motion.button key={currentIndex} type="button" className="storybook-page" onClick={handlePageClick} onPointerDown={(event) => { pointerStart.current = event.clientX; }} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }} aria-label={`Memory ${currentIndex + 1}: ${currentPhoto.caption}. Tap to turn the page.`} custom={direction} variants={storyPageVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.28 }}>
+          <span className="storybook-photo-frame"><img src={currentPhoto.image} alt={currentPhoto.alt} draggable={false} /><span className="storybook-photo-mark">♡</span></span>
+          <span className="storybook-caption-label">A LITTLE MEMORY</span>
+          <span className="storybook-caption">{currentPhoto.caption}</span>
+          <span className="storybook-turn-hint">tap or swipe to turn the page <ArrowRight size={14} /></span>
+        </motion.button>
+      </AnimatePresence>
+      <button type="button" className="storybook-view-photo" onClick={() => onSelect(currentPhoto)} aria-label="View this photo full size"><Expand size={17} /></button>
+    </div>
+    <div className="storybook-controls">
+      <button type="button" className="storybook-nav" onClick={() => goToPage(currentIndex - 1)} disabled={currentIndex === 0} aria-label="Previous photo"><ArrowLeft size={17} /> Previous</button>
+      <div className="storybook-dots" aria-label="Choose a memory">{photos.map((photo, index) => <button key={`${photo.caption}-${index}`} type="button" className={`storybook-dot${index === currentIndex ? " is-active" : ""}`} onClick={() => goToPage(index)} aria-label={`Go to memory ${index + 1}`} aria-current={index === currentIndex ? "step" : undefined} />)}</div>
+      <button type="button" className="storybook-nav" onClick={() => goToPage(currentIndex + 1)} disabled={currentIndex === photos.length - 1} aria-label="Next photo">Next <ArrowRight size={17} /></button>
+    </div>
+    <p className="storybook-footer">Every picture holds a little piece of the story.</p>
+  </section></PageTransition>;
 }
 
 function MessagesSection({ onBack, openedLetter, setOpenedLetter }: { onBack: () => void; openedLetter: number | null; setOpenedLetter: (value: number | null) => void }) {

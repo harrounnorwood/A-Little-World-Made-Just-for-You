@@ -53,6 +53,31 @@ h2 em { color:var(--deep-rose); font-style:normal; }
 .passcode-visibility:focus-visible { outline:2px solid #477dbb; outline-offset:2px; }
 .welcome-passcode-form .primary-button { margin-top:4px; }
 .passcode-error { margin:0; color:#a33f50; font-size:.8rem; text-align:center; }
+.storybook { width:min(100%,680px); margin:30px auto 0; }
+.storybook-book { position:relative; padding:42px 42px 30px 54px; border:1px solid #d7e1ee; border-radius:20px 28px 28px 20px; background:linear-gradient(90deg,#e4eaf2 0 15px,#fff 15px,#fff 100%); box-shadow:0 24px 58px #334b681b, inset 9px 0 14px #43556d0b; perspective:1200px; }
+.storybook-spine { position:absolute; top:0; bottom:0; left:15px; width:12px; border-right:1px solid #d4deea; background:repeating-linear-gradient(0deg,#edf2f8 0 7px,#e2e9f2 8px 9px); }
+.storybook-page-number { display:flex; justify-content:space-between; margin:0 2px 16px; color:#54749a; font-size:.65rem; font-weight:700; letter-spacing:.16em; }
+.storybook-page-number span { color:#a0aaba; }
+.storybook-page { display:flex; flex-direction:column; align-items:center; width:100%; min-height:470px; padding:16px 16px 12px; border:1px solid #e7eaf0; background:#fffdfa; box-shadow:0 10px 25px #3e4d6016; color:var(--ink); text-align:center; cursor:pointer; touch-action:pan-y; transform-origin:left center; }
+.storybook-page:focus-visible { outline:3px solid #477dbb; outline-offset:4px; }
+.storybook-photo-frame { position:relative; display:grid; place-items:center; width:100%; height:330px; overflow:hidden; background:#edf2f8; }
+.storybook-photo-frame img { width:100%; height:100%; object-fit:cover; user-select:none; }
+.storybook-photo-mark { position:absolute; top:13px; right:14px; display:grid; place-items:center; width:34px; height:34px; border:1px solid #ffffffa6; border-radius:50%; background:#ffffffcf; color:#477dbb; font-size:1.2rem; }
+.storybook-caption-label { margin-top:18px; color:#6683a5; font-size:.62rem; font-weight:700; letter-spacing:.2em; }
+.storybook-caption { max-width:440px; margin-top:9px; color:#48586d; font-family:"Cormorant Garamond",serif; font-size:clamp(1.35rem,3.4vw,1.9rem); line-height:1.18; }
+.storybook-turn-hint { display:flex; align-items:center; gap:6px; margin-top:auto; padding-top:16px; color:#8a97a7; font-size:.67rem; letter-spacing:.04em; }
+.storybook-view-photo { position:absolute; top:82px; right:54px; display:grid; place-items:center; width:36px; height:36px; border:1px solid #e2e8f0; border-radius:50%; background:#ffffffeb; color:#4c6e94; box-shadow:0 4px 12px #334b6816; }
+.storybook-view-photo:hover { background:#edf4fd; color:#315f98; }
+.storybook-view-photo:focus-visible,.storybook-nav:focus-visible,.storybook-dot:focus-visible { outline:2px solid #477dbb; outline-offset:3px; }
+.storybook-controls { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:20px; }
+.storybook-nav { display:inline-flex; align-items:center; gap:7px; padding:10px 13px; border:1px solid #dce5f0; border-radius:999px; background:#fff; color:#47617e; font-size:.77rem; font-weight:600; }
+.storybook-nav:hover:not(:disabled) { border-color:#9bbbe2; background:#f1f6fd; }
+.storybook-nav:disabled { cursor:not-allowed; opacity:.4; }
+.storybook-dots { display:flex; align-items:center; justify-content:center; gap:9px; }
+.storybook-dot { width:9px; height:9px; padding:0; border:0; border-radius:50%; background:#cbd6e3; transition:transform .2s,background .2s; }
+.storybook-dot.is-active { transform:scale(1.35); background:#477dbb; }
+.storybook-footer { margin:17px 0 0; color:var(--muted); font-family:"Oooh Baby",cursive; font-size:1.2rem; text-align:center; }
+@media (max-width:760px) { .storybook { margin-top:20px; }.storybook-book { padding:32px 16px 20px 27px; border-radius:16px 21px 21px 16px; background:linear-gradient(90deg,#e4eaf2 0 11px,#fff 11px,#fff 100%); }.storybook-spine { left:11px; width:8px; }.storybook-page-number { margin-bottom:12px; font-size:.58rem; }.storybook-page { min-height:390px; padding:10px 10px 12px; }.storybook-photo-frame { height:clamp(205px,68vw,330px); }.storybook-caption-label { margin-top:14px; }.storybook-turn-hint { font-size:.62rem; }.storybook-view-photo { top:63px; right:25px; width:33px; height:33px; }.storybook-controls { gap:7px; }.storybook-nav { padding:9px 10px; font-size:.7rem; }.storybook-dots { gap:7px; }.storybook-dot { width:8px; height:8px; } }
 .music-layout { grid-template-columns:minmax(210px,.72fr) minmax(0,1.6fr); gap:34px; align-items:stretch; }
 .record-art { align-self:center; padding:28px 18px; border:1px solid #e3ebf6; border-radius:25px; background:linear-gradient(155deg,#fff 0%,#f4f8fe 100%); box-shadow:0 16px 42px #43556d10; }
 .record { position:relative; width:min(230px,100%); }
