@@ -69,7 +69,7 @@ export const giftContent = {
   ] satisfies FlowerItem[],
   letters: [
     { title: "A birthday note", teaser: "Open when you're ready", body: "[Write a personal birthday message here.]", color: "pink" },
-    { title: "A note for later", teaser: "Open when you need a smile", body: "[Write a personal note here.]", color: "gold" },
+    { title: "Monthsary Wish", teaser: "Open when you need a smile", body: "[Write a personal note here.]", color: "gold" },
     { title: "A wish for your year", teaser: "A wish folded just for you", body: "[Add a birthday wish here.]", color: "lavender" },
   ] satisfies LetterItem[],
 };
