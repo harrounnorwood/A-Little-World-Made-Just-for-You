@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
-import { ArrowLeft, ArrowRight, Cake, Camera, ChevronRight, Eye, EyeOff, Expand, Flower2, Gift, Heart, Mail, Music2, Pause, Play, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Cake, Camera, Check, ChevronRight, Eye, EyeOff, Expand, Flower2, Gift, Heart, Mail, Mic, Music2, Pause, Play, Puzzle, RotateCcw, Sparkles, X } from "lucide-react";
 import { giftContent, type FlowerItem, type PhotoItem } from "../src/data/gift-content";
 
-type Section = "menu" | "music" | "flowers" | "pictures" | "messages" | "surprise";
+type Section = "menu" | "music" | "flowers" | "pictures" | "messages" | "voice" | "game" | "surprise";
 
 const storyPageVariants: Variants = {
   enter: (direction: number = 1) => ({ opacity: 0, x: direction * 35, rotateY: direction * -4 }),
@@ -25,7 +25,98 @@ const cardData = [
   { id: "flowers" as const, title: "Flowers", subtitle: "A bouquet in pixels", icon: Flower2, className: "card-flowers" },
   { id: "pictures" as const, title: "Pictures", subtitle: "Favorite little moments", icon: Camera, className: "card-pictures" },
   { id: "messages" as const, title: "Messages", subtitle: "Open when you need love", icon: Mail, className: "card-messages" },
+  { id: "voice" as const, title: "Voice Message", subtitle: "A little message from me", icon: Mic, className: "card-voice" },
+  { id: "game" as const, title: "Word Hunt", subtitle: "Find the hidden words", icon: Puzzle, className: "card-game" },
 ];
+
+type WordHuntCell = { row: number; column: number };
+type WordHuntBoard = { letters: string[][]; paths: Record<string, WordHuntCell[]> };
+type WordHuntLine = { start: { x: number; y: number }; end: { x: number; y: number }; width: number; height: number; found: boolean };
+
+function normalizeWordHuntWord(word: string) {
+  return word.replace(/[^a-z0-9]/gi, "").toUpperCase();
+}
+
+function createWordHuntBoard(words: string[], size: number): WordHuntBoard {
+  const preferredDirections = [
+    [0, -1],
+    [-1, 0],
+    [1, 1],
+    [1, 0],
+    [-1, 1],
+    [0, -1],
+    [1, -1],
+    [-1, 0],
+    [-1, -1],
+    [0, 1],
+  ] as const;
+  let seed = 20261027;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+
+  const placementOrder = words.map((displayWord, index) => ({
+    word: normalizeWordHuntWord(displayWord),
+    index,
+  })).sort((first, second) => second.word.length - first.word.length);
+  if (placementOrder.some(({ word }) => word.length > size)) {
+    const tooLongWord = placementOrder.find(({ word }) => word.length > size)?.word;
+    throw new Error(`Word "${tooLongWord}" is longer than the word hunt grid.`);
+  }
+
+  let letters: string[][] = [];
+  let paths: Record<string, WordHuntCell[]> = {};
+  let placedAllWords = false;
+
+  for (let attempt = 0; attempt < 100 && !placedAllWords; attempt += 1) {
+    letters = Array.from({ length: size }, () => Array<string>(size).fill(""));
+    paths = {};
+    placedAllWords = true;
+
+    for (const { word, index: wordIndex } of placementOrder) {
+      const [rowStep, columnStep] = preferredDirections[wordIndex % preferredDirections.length];
+      const candidates: WordHuntCell[][] = [];
+
+      for (let row = 0; row < size; row += 1) {
+        for (let column = 0; column < size; column += 1) {
+          const endRow = row + rowStep * (word.length - 1);
+          const endColumn = column + columnStep * (word.length - 1);
+          if (endRow < 0 || endRow >= size || endColumn < 0 || endColumn >= size) continue;
+          candidates.push(Array.from({ length: word.length }, (_, index) => ({
+            row: row + rowStep * index,
+            column: column + columnStep * index,
+          })));
+        }
+      }
+
+      for (let index = candidates.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(random() * (index + 1));
+        [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
+      }
+
+      const path = candidates.find((candidate) => candidate.every((cell) => !letters[cell.row][cell.column]));
+      if (!path) {
+        placedAllWords = false;
+        break;
+      }
+      path.forEach((cell, index) => { letters[cell.row][cell.column] = word[index]; });
+      paths[word] = path;
+    }
+  }
+
+  if (!placedAllWords) throw new Error("Could not place all words in the word hunt grid.");
+
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  letters.forEach((row) => row.forEach((letter, column) => {
+    if (!letter) letter = alphabet[Math.floor(random() * alphabet.length)];
+    row[column] = letter;
+  }));
+  return { letters, paths };
+}
+
+const wordHuntGridSize = 17;
+const wordHuntBoard = createWordHuntBoard(giftContent.wordHuntWords, wordHuntGridSize);
 
 export default function Home() {
   const [passcode, setPasscode] = useState("");
@@ -64,6 +155,10 @@ export default function Home() {
           <PicturesSection key="pictures" onBack={goMenu} onSelect={(photo) => setSelectedPhotoIndex(giftContent.photos.findIndex(({ image }) => image === photo.image))} />
         ) : section === "messages" ? (
           <MessagesSection key="messages" onBack={goMenu} openedLetter={openedLetter} setOpenedLetter={setOpenedLetter} />
+        ) : section === "voice" ? (
+          <VoiceMessageSection key="voice" onBack={goMenu} />
+        ) : section === "game" ? (
+          <WordHuntSection key="game" onBack={goMenu} />
         ) : (
           <BirthdayReveal key={replayKey} onBack={goMenu} onReplay={() => setReplayKey((key) => key + 1)} />
         )}
@@ -225,6 +320,194 @@ function PicturesSection({ onBack, onSelect }: { onBack: () => void; onSelect: (
 
 function MessagesSection({ onBack, openedLetter, setOpenedLetter }: { onBack: () => void; openedLetter: number | null; setOpenedLetter: (value: number | null) => void }) {
   return <PageTransition className="content-page"><SectionHeader title="Letters for later" kicker="✉ words from the heart" onBack={onBack} /><p className="section-lead">Open one whenever you need a reminder of how loved you are.</p><div className="letter-grid">{giftContent.letters.map((letter, index) => <motion.button key={letter.title} className={`letter-card ${letter.color} ${openedLetter === index ? "is-open" : ""}`} onClick={() => setOpenedLetter(openedLetter === index ? null : index)} whileTap={{ scale: 0.98 }}><span className="letter-top"><Mail size={34} /><span className="letter-stamp">♡</span></span>{openedLetter === index ? <span className="letter-body"><strong>{letter.title}</strong><span>{letter.body}</span><small>With love, {giftContent.senderName} ♡</small><small>tap to fold away</small></span> : <span className="letter-teaser"><strong>{letter.title}</strong><span>{letter.teaser}</span><small>tap to open ·</small></span>}</motion.button>)}</div></PageTransition>;
+}
+
+function VoiceMessageSection({ onBack }: { onBack: () => void }) {
+  const [audioError, setAudioError] = useState("");
+
+  return <PageTransition className="content-page"><SectionHeader title="A voice message for you" kicker="♡ a little something to hear" onBack={onBack} /><section className="voice-message-card">
+    <span className="voice-message-icon"><Mic size={27} /></span>
+    <h3>A message, in my own voice</h3>
+    <p>{giftContent.voiceMessageDescription}</p>
+    {giftContent.voiceMessageUrl ? <audio className="voice-message-player" controls preload="metadata" src={giftContent.voiceMessageUrl} onError={() => setAudioError("The voice recording could not be loaded. Check the file path in gift-content.ts.")}>Your browser does not support audio playback.</audio> : <div className="voice-message-missing"><strong>Your recording goes here</strong><span>Add your audio file at <code>public/audio/voice-message.mp3</code>, then set <code>voiceMessageUrl</code> in <code>src/data/gift-content.ts</code> to <code>/audio/voice-message.mp3</code>.</span></div>}
+    {audioError && <p className="voice-message-error" role="alert">{audioError}</p>}
+  </section></PageTransition>;
+}
+
+function WordHuntSection({ onBack }: { onBack: () => void }) {
+  const [tapStart, setTapStart] = useState<WordHuntCell | null>(null);
+  const [selectedPath, setSelectedPath] = useState<WordHuntCell[]>([]);
+  const [selectionLine, setSelectionLine] = useState<WordHuntLine | null>(null);
+  const [foundWords, setFoundWords] = useState<string[]>([]);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ pointerId: number; start: WordHuntCell } | null>(null);
+  const [message, setMessage] = useState("Drag from the first letter to the last. Words can go across, up and down, or diagonal.");
+  const normalizedWords = giftContent.wordHuntWords.map(normalizeWordHuntWord);
+  const foundCells = new Set(foundWords.flatMap((word) => wordHuntBoard.paths[word].map(({ row, column }) => `${row}-${column}`)));
+  const selectedCells = new Set(selectedPath.map(({ row, column }) => `${row}-${column}`));
+
+  const getPath = (start: WordHuntCell, end: WordHuntCell) => {
+    const rowDistance = end.row - start.row;
+    const columnDistance = end.column - start.column;
+    const steps = Math.max(Math.abs(rowDistance), Math.abs(columnDistance));
+    if (steps === 0) return [start];
+
+    const rowStep = rowDistance === 0 ? 0 : rowDistance / steps;
+    const columnStep = columnDistance === 0 ? 0 : columnDistance / steps;
+    if (![0, 1, -1].includes(rowStep) || ![0, 1, -1].includes(columnStep)) return null;
+
+    return Array.from({ length: steps + 1 }, (_, index) => ({
+      row: start.row + rowStep * index,
+      column: start.column + columnStep * index,
+    }));
+  };
+
+  const finishSelection = (path: WordHuntCell[]) => {
+    setTapStart(null);
+    const selectedWord = path.map(({ row, column }) => wordHuntBoard.letters[row][column]).join("");
+    const match = normalizedWords.find((word) => word === selectedWord || word === [...selectedWord].reverse().join(""));
+
+    setSelectedPath(path);
+    if (!match) {
+      setSelectionLine((line) => line ? { ...line, found: false } : null);
+      setMessage("Not one of the hidden words. Try another line!");
+      return;
+    }
+    if (foundWords.includes(match)) {
+      setSelectionLine((line) => line ? { ...line, found: true } : null);
+      setMessage("You already found that one! Look for another word.");
+      return;
+    }
+
+    const updatedWords = [...foundWords, match];
+    setFoundWords(updatedWords);
+    setSelectionLine((line) => line ? { ...line, found: true } : null);
+    setMessage(updatedWords.length === normalizedWords.length ? "You found them all! Happy birthday, love! ♡" : `You found “${giftContent.wordHuntWords[normalizedWords.indexOf(match)]}”! Keep going!`);
+  };
+
+  const getCellAtPoint = (x: number, y: number) => {
+    const element = document.elementFromPoint(x, y)?.closest<HTMLButtonElement>(".word-hunt-cell");
+    if (!element || !gridRef.current?.contains(element)) return null;
+    return { row: Number(element.dataset.row), column: Number(element.dataset.column) };
+  };
+
+  const getCellCenter = (cell: WordHuntCell) => {
+    const grid = gridRef.current;
+    const element = grid?.querySelector<HTMLButtonElement>(`[data-row="${cell.row}"][data-column="${cell.column}"]`);
+    if (!grid || !element) return null;
+    const gridRect = grid.getBoundingClientRect();
+    const cellRect = element.getBoundingClientRect();
+    return { x: cellRect.left + cellRect.width / 2 - gridRect.left, y: cellRect.top + cellRect.height / 2 - gridRect.top, width: gridRect.width, height: gridRect.height };
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const target = event.target instanceof Element ? event.target.closest<HTMLButtonElement>(".word-hunt-cell") : null;
+    if (!target || !gridRef.current) return;
+    event.preventDefault();
+    const start = { row: Number(target.dataset.row), column: Number(target.dataset.column) };
+    const center = getCellCenter(start);
+    if (!center) return;
+    dragRef.current = { pointerId: event.pointerId, start };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setSelectedPath([start]);
+    setSelectionLine({ start: center, end: center, width: center.width, height: center.height, found: false });
+    setMessage("Keep dragging in a straight line to the last letter.");
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const end = getCellAtPoint(event.clientX, event.clientY);
+    if (!end) return;
+    const path = getPath(drag.start, end);
+    if (!path) {
+      setSelectedPath([drag.start]);
+      setSelectionLine((line) => line ? { ...line, end: line.start } : null);
+      return;
+    }
+
+    const center = getCellCenter(end);
+    if (!center) return;
+    setSelectedPath(path);
+    setSelectionLine((line) => line ? { ...line, end: { x: center.x, y: center.y } } : null);
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+
+    const end = getCellAtPoint(event.clientX, event.clientY);
+    const dragPath = end ? getPath(drag.start, end) : null;
+    if (!dragPath || dragPath.length < 2) {
+      if (end && tapStart) {
+        const tapPath = getPath(tapStart, end);
+        if (tapPath && tapPath.length > 1) {
+          setSelectedPath(tapPath);
+          const startCenter = getCellCenter(tapStart);
+          const endCenter = getCellCenter(end);
+          if (startCenter && endCenter) {
+            setSelectionLine({ start: startCenter, end: { x: endCenter.x, y: endCenter.y }, width: startCenter.width, height: startCenter.height, found: false });
+          }
+          finishSelection(tapPath);
+          return;
+        }
+        setTapStart(end);
+        setSelectedPath([end]);
+        const center = getCellCenter(end);
+        setSelectionLine((line) => line && center ? { ...line, start: center, end: center } : null);
+        setMessage("Those letters are not in a straight line. Choose a new first letter.");
+        return;
+      }
+
+      if (end) {
+        setTapStart(end);
+        setSelectedPath([end]);
+        setMessage("First letter selected. Tap the last letter, or drag to select the word.");
+        return;
+      }
+
+      setSelectedPath([]);
+      setSelectionLine(null);
+      setMessage("Drag across at least two letters to select a word.");
+      return;
+    }
+    setTapStart(null);
+    setSelectedPath(dragPath);
+    finishSelection(dragPath);
+  };
+
+  const handlePointerCancel = () => {
+    dragRef.current = null;
+    setTapStart(null);
+    setSelectedPath([]);
+    setSelectionLine(null);
+  };
+
+  const resetGame = () => {
+    dragRef.current = null;
+    setTapStart(null);
+    setSelectedPath([]);
+    setSelectionLine(null);
+    setFoundWords([]);
+    setMessage("Drag from the first letter to the last. Words can go across, up and down, or diagonal.");
+  };
+
+  return <PageTransition className="content-page"><SectionHeader title="A little word hunt" kicker="♡ a game just for you" onBack={onBack} /><p className="section-lead">Find the birthday wishes hidden in the letters. Drag to connect a word, or tap its first and last letters.</p><div className="word-hunt-layout">
+    <section className="word-hunt-board-wrap" aria-label="Word hunt puzzle">
+      <div ref={gridRef} className="word-hunt-grid" role="group" aria-label="Letter grid" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel}>
+        {selectionLine && <svg className="word-hunt-selection-line" viewBox={`0 0 ${selectionLine.width} ${selectionLine.height}`} preserveAspectRatio="none" aria-hidden="true"><line x1={selectionLine.start.x} y1={selectionLine.start.y} x2={selectionLine.end.x} y2={selectionLine.end.y} className={selectionLine.found ? "is-found" : ""} /><circle cx={selectionLine.start.x} cy={selectionLine.start.y} r="12" className={selectionLine.found ? "is-found" : ""} /><circle cx={selectionLine.end.x} cy={selectionLine.end.y} r="12" className={selectionLine.found ? "is-found" : ""} /></svg>}
+        {wordHuntBoard.letters.map((row, rowIndex) => row.map((letter, columnIndex) => {
+        const key = `${rowIndex}-${columnIndex}`;
+        const isFound = foundCells.has(key);
+        const isSelected = selectedCells.has(key);
+        return <button key={key} type="button" data-row={rowIndex} data-column={columnIndex} className={`word-hunt-cell${isFound ? " is-found" : ""}${isSelected && !isFound ? " is-selected" : ""}`} aria-label={`Row ${rowIndex + 1}, column ${columnIndex + 1}, ${letter}${isFound ? ", part of a found word" : ""}`}>{letter}</button>;
+      }))}</div>
+      <p className="word-hunt-status" aria-live="polite">{message}</p>
+    </section>
+    <aside className="word-hunt-words"><div className="word-hunt-heading"><h3>Find these words</h3><span>{foundWords.length} / {normalizedWords.length}</span></div><ul>{giftContent.wordHuntWords.map((word, index) => <li key={word} className={foundWords.includes(normalizedWords[index]) ? "is-found" : ""}>{foundWords.includes(normalizedWords[index]) ? <Check size={17} /> : <span className="word-hunt-bullet">♡</span>}<span>{word}</span></li>)}</ul><button type="button" className="word-hunt-reset" onClick={resetGame}><RotateCcw size={15} /> Start over</button></aside>
+  </div></PageTransition>;
 }
 
 function BirthdayReveal({ onBack, onReplay }: { onBack: () => void; onReplay: () => void }) {
