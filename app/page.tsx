@@ -61,7 +61,7 @@ export default function Home() {
         ) : section === "flowers" ? (
           <FlowersSection key="flowers" onBack={goMenu} onSelect={setSelectedFlower} />
         ) : section === "pictures" ? (
-          <PicturesSection key="pictures" onBack={goMenu} onSelect={(photo) => setSelectedPhotoIndex(giftContent.photos.indexOf(photo))} />
+          <PicturesSection key="pictures" onBack={goMenu} onSelect={(photo) => setSelectedPhotoIndex(giftContent.photos.findIndex(({ image }) => image === photo.image))} />
         ) : section === "messages" ? (
           <MessagesSection key="messages" onBack={goMenu} openedLetter={openedLetter} setOpenedLetter={setOpenedLetter} />
         ) : (
@@ -153,15 +153,17 @@ function FlowersSection({ onBack, onSelect }: { onBack: () => void; onSelect: (f
 }
 
 function PicturesSection({ onBack, onSelect }: { onBack: () => void; onSelect: (photo: PhotoItem) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const pointerStart = useRef<number | null>(null);
   const suppressClick = useRef(false);
   const photos = giftContent.photos;
-  const currentPhoto = photos[currentIndex];
+  const isClosingPage = currentIndex === photos.length;
+  const currentPhoto = photos[Math.min(currentIndex, photos.length - 1)];
 
   const goToPage = (nextIndex: number) => {
-    if (nextIndex < 0 || nextIndex >= photos.length || nextIndex === currentIndex) return;
+    if (nextIndex < 0 || nextIndex > photos.length || nextIndex === currentIndex) return;
     setDirection(nextIndex > currentIndex ? 1 : -1);
     setCurrentIndex(nextIndex);
   };
@@ -181,30 +183,44 @@ function PicturesSection({ onBack, onSelect }: { onBack: () => void; onSelect: (
       suppressClick.current = false;
       return;
     }
-    goToPage(currentIndex + 1);
+    goToPage(currentIndex + (isClosingPage ? -1 : 1));
   };
 
-  return <PageTransition className="content-page"><SectionHeader title="Little moments of you" kicker="♡ the scrapbook" onBack={onBack} /><p className="section-lead">Turn each page and take your time with the memories.</p><section className="storybook" aria-label="Photo storybook">
+  const hasStory = Boolean(currentPhoto.title && !currentPhoto.caption.startsWith("[Add caption"));
+
+  return <PageTransition className="content-page"><SectionHeader title="Little moments of you" kicker="♡ the scrapbook" onBack={onBack} /><p className="section-lead">{isOpen ? "Turn each page and take your time with the memories." : "A little keepsake, filled with moments I hold close."}</p>{!isOpen ? <motion.button type="button" className="storybook-cover" onClick={() => setIsOpen(true)} aria-label={`Open the photo album for ${giftContent.recipientNickname}`} initial={{ opacity: 0, y: 12, rotateY: -3 }} animate={{ opacity: 1, y: 0, rotateY: 0 }} whileHover={{ y: -3 }} whileTap={{ scale: 0.99 }}>
+    <span className="storybook-cover-inner">
+      <span className="storybook-cover-photo"><img src={photos[0].image} alt="" draggable={false} /><span className="storybook-cover-tape" /></span>
+      <span className="storybook-cover-title">Our little<br /><em>moments</em></span>
+      <span className="storybook-cover-dedication">for {giftContent.recipientNickname}, with love</span>
+      <span className="storybook-cover-open">Open the album <ArrowRight size={15} /></span>
+    </span>
+  </motion.button> : <section className="storybook" aria-label="Photo storybook">
     <div className="storybook-book">
       <span className="storybook-spine" aria-hidden="true" />
-      <div className="storybook-page-number">MEMORY {String(currentIndex + 1).padStart(2, "0")} <span>OF {String(photos.length).padStart(2, "0")}</span></div>
+      <div className="storybook-page-number">{isClosingPage ? <>THE LAST PAGE <span>A NOTE FOR YOU</span></> : <>MEMORY {String(currentIndex + 1).padStart(2, "0")} <span>OF {String(photos.length).padStart(2, "0")}</span></>}</div>
       <AnimatePresence mode="wait" initial={false} custom={direction}>
-        <motion.button key={currentIndex} type="button" className="storybook-page" onClick={handlePageClick} onPointerDown={(event) => { pointerStart.current = event.clientX; }} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }} aria-label={`Memory ${currentIndex + 1}: ${currentPhoto.caption}. Tap to turn the page.`} custom={direction} variants={storyPageVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.28 }}>
+        {isClosingPage ? <motion.button key="closing-note" type="button" className="storybook-page storybook-closing-note" onClick={handlePageClick} onPointerDown={(event) => { pointerStart.current = event.clientX; }} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }} aria-label={`${giftContent.photoBookClosingTitle} ${giftContent.photoBookClosingMessage} Swipe right to return to the last photo.`} custom={direction} variants={storyPageVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.28 }}>
+          <span className="storybook-closing-mark" aria-hidden="true"><Heart size={25} fill="currentColor" /></span>
+          <span className="storybook-closing-title">{giftContent.photoBookClosingTitle}</span>
+          <span className="storybook-closing-message">{giftContent.photoBookClosingMessage}</span>
+          <span className="storybook-turn-hint"><ArrowLeft size={14} /> swipe right to revisit the last photo</span>
+        </motion.button> : <motion.button key={currentIndex} type="button" className={`storybook-page${currentPhoto.title ? " has-title" : ""}${hasStory ? " has-story" : ""}`} onClick={handlePageClick} onPointerDown={(event) => { pointerStart.current = event.clientX; }} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }} aria-label={`Memory ${currentIndex + 1}: ${currentPhoto.title ? `${currentPhoto.title}. ` : ""}${currentPhoto.caption}. Tap to turn the page.`} custom={direction} variants={storyPageVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.28 }}>
           <span className="storybook-photo-frame"><img src={currentPhoto.image} alt={currentPhoto.alt} draggable={false} /><span className="storybook-photo-mark">♡</span></span>
-          <span className="storybook-caption-label">A LITTLE MEMORY</span>
-          <span className="storybook-caption">{currentPhoto.caption}</span>
+          <span className="storybook-caption-label">{currentPhoto.title ?? "A LITTLE MEMORY"}</span>
+          <span className={`storybook-caption${hasStory ? " storybook-story-body" : ""}`}>{currentPhoto.caption}</span>
           <span className="storybook-turn-hint">tap or swipe to turn the page <ArrowRight size={14} /></span>
-        </motion.button>
+        </motion.button>}
       </AnimatePresence>
-      <button type="button" className="storybook-view-photo" onClick={() => onSelect(currentPhoto)} aria-label="View this photo full size"><Expand size={17} /></button>
+      {!isClosingPage && <button type="button" className="storybook-view-photo" onClick={() => onSelect(currentPhoto)} aria-label="View this photo full size"><Expand size={17} /></button>}
     </div>
     <div className="storybook-controls">
-      <button type="button" className="storybook-nav" onClick={() => goToPage(currentIndex - 1)} disabled={currentIndex === 0} aria-label="Previous photo"><ArrowLeft size={17} /> Previous</button>
-      <div className="storybook-dots" aria-label="Choose a memory">{photos.map((photo, index) => <button key={`${photo.caption}-${index}`} type="button" className={`storybook-dot${index === currentIndex ? " is-active" : ""}`} onClick={() => goToPage(index)} aria-label={`Go to memory ${index + 1}`} aria-current={index === currentIndex ? "step" : undefined} />)}</div>
-      <button type="button" className="storybook-nav" onClick={() => goToPage(currentIndex + 1)} disabled={currentIndex === photos.length - 1} aria-label="Next photo">Next <ArrowRight size={17} /></button>
+      <button type="button" className="storybook-nav" onClick={() => goToPage(currentIndex - 1)} disabled={currentIndex === 0} aria-label="Previous page"><ArrowLeft size={17} /> Previous</button>
+      <div className="storybook-dots" aria-label="Choose a memory">{photos.map((photo, index) => <button key={`${photo.caption}-${index}`} type="button" className={`storybook-dot${index === currentIndex || (isClosingPage && index === photos.length - 1) ? " is-active" : ""}`} onClick={() => goToPage(index)} aria-label={`Go to memory ${index + 1}`} aria-current={index === currentIndex || (isClosingPage && index === photos.length - 1) ? "step" : undefined} />)}</div>
+      <button type="button" className="storybook-nav" onClick={() => goToPage(currentIndex + 1)} disabled={isClosingPage} aria-label="Next page">Next <ArrowRight size={17} /></button>
     </div>
-    <p className="storybook-footer">Every picture holds a little piece of the story.</p>
-  </section></PageTransition>;
+    <p className="storybook-footer">{isClosingPage ? "The end of the pictures, but never the story." : "Every picture holds a little piece of the story."}</p>
+  </section>}</PageTransition>;
 }
 
 function MessagesSection({ onBack, openedLetter, setOpenedLetter }: { onBack: () => void; openedLetter: number | null; setOpenedLetter: (value: number | null) => void }) {
@@ -238,7 +254,7 @@ function PhotoLightbox({ photos, index, onNavigate, onClose }: { photos: PhotoIt
     }
   };
 
-  return <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}><motion.div className="lightbox" initial={{ scale: 0.9, y: 12 }} animate={{ scale: 1, y: 0 }} onClick={(event) => event.stopPropagation()}><button className="close-button" onClick={onClose} aria-label="Close photo"><X /></button><div className="lightbox-image-wrap" onPointerDown={(event) => { pointerStart.current = event.clientX; }} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }}><AnimatePresence mode="wait" initial={false}><motion.img key={index} src={photo.image} alt={photo.alt} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.2 }} /></AnimatePresence><button className="lightbox-nav lightbox-previous" onClick={() => onNavigate(Math.max(0, index - 1))} disabled={index === 0} aria-label="Previous photo"><ArrowLeft /></button><button className="lightbox-nav lightbox-next" onClick={() => onNavigate(Math.min(photos.length - 1, index + 1))} disabled={index === photos.length - 1} aria-label="Next photo"><ArrowRight /></button></div><p>{photo.caption}</p><span className="lightbox-counter">{index + 1} / {photos.length}</span></motion.div></motion.div>;
+  return <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}><motion.div className="lightbox" initial={{ scale: 0.9, y: 12 }} animate={{ scale: 1, y: 0 }} onClick={(event) => event.stopPropagation()}><button className="close-button" onClick={onClose} aria-label="Close photo"><X /></button><div className="lightbox-image-wrap" onPointerDown={(event) => { pointerStart.current = event.clientX; }} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerStart.current = null; }}><AnimatePresence mode="wait" initial={false}><motion.img key={index} src={photo.image} alt={photo.alt} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.2 }} /></AnimatePresence><button className="lightbox-nav lightbox-previous" onClick={() => onNavigate(Math.max(0, index - 1))} disabled={index === 0} aria-label="Previous photo"><ArrowLeft /></button><button className="lightbox-nav lightbox-next" onClick={() => onNavigate(Math.min(photos.length - 1, index + 1))} disabled={index === photos.length - 1} aria-label="Next photo"><ArrowRight /></button></div>{photo.title && <h3 className="lightbox-title">{photo.title}</h3>}<p>{photo.caption}</p><span className="lightbox-counter">{index + 1} / {photos.length}</span></motion.div></motion.div>;
 }
 
 function FlowerModal({ flower, onClose }: { flower: FlowerItem; onClose: () => void }) {
