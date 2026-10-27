@@ -58,9 +58,11 @@ export const giftContent = {
     { image: "/images/photos/19.jpg", title: "OUR LITTLE PLUSHIE DOG FAMILY 🤍", caption: "AND LAST BUT DEFINITELY NOT THE LEAST, MY BABY WITH OUR LITTLE PLUSHIE DOG.  This picture feels so warm and special because it's you with our little plushie baby. It's such a cute little memory, but it's also one of those moments that makes me smile just thinking about us. Just you, me, and our tiny plushie dog—MY FAVORITE LITTLE FAMILY. ", alt: "Memory photo 19", rotation: -2, tone: "lilac" },
   ] satisfies PhotoItem[],
   flowers: [
-    { image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=900&q=85", name: "The Blush Bouquet", description: "Soft blooms for the softest heart.", note: "Replace this image with a photo of the real bouquet." },
-    { image: "https://images.unsplash.com/photo-1455582916367-25f75bfc6710?auto=format&fit=crop&w=900&q=85", name: "Golden Hour Daisies", description: "A little sunshine in flower form.", note: "Add a personal note about why you chose these flowers." },
-    { image: "https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=85", name: "Garden Roses", description: "Romantic, classic, and impossible not to love.", note: "This sample card is ready for your own flower photo." },
+    { image: "/images/flowers/flower%201.jpg", name: "A Bright Little Bouquet", description: "Colorful blooms, picked just to make you smile.", note: "A little bunch of flowers for my favorite person. I hope they bring a smile to your day." },
+    { image: "/images/flowers/flower%202.jpg", name: "Flowers & a Tiny Friend", description: "A sweet bouquet with the cutest little companion.", note: "Flowers are lovely, but this tiny friend makes the bouquet extra adorable—just like you." },
+    { image: "/images/flowers/flower%203.jpg", name: "The Lavender Bouquet", description: "Soft purples and pinks wrapped up with love.", note: "A gentle little reminder that you deserve all the lovely things in the world." },
+    { image: "/images/flowers/flower%204.jpg", name: "A Bouquet Full of Love", description: "Bright blooms, heart balloons, and two teddy bears.", note: "A whole bouquet of love, with a couple of tiny bears to keep it company." },
+    { image: "/images/flowers/flower%205.jpg", name: "Sunshine in Yellow", description: "A cheerful bouquet wrapped in sunny yellow.", note: "A little sunshine for you, on your birthday and every day after." },
   ] satisfies FlowerItem[],
   letters: [
     { title: "A birthday note", teaser: "Open when you're ready", body: "[Write a personal birthday message here.]", color: "pink" },
