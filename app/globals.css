@@ -150,7 +150,10 @@ h2 em { color:var(--deep-rose); font-style:normal; }
 .voice-message-missing strong { color:#476b79; }
 .voice-message-missing span { color:var(--muted); font-size:.8rem; line-height:1.7; }
 .voice-message-missing code { overflow-wrap:anywhere; color:#526a83; }
-.voice-message-player { display:block; width:min(100%,480px); margin:22px auto 0; }
+.voice-message-list { display:grid; gap:18px; }
+.voice-message-item { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.voice-message-item strong { color:#476b79; font-family:"Cormorant Garamond",serif; font-size:1.35rem; }
+.voice-message-player { display:block; width:min(100%,480px); margin:0 auto; }
 .voice-message-error { color:#a33f50!important; font-size:.8rem; }
 .word-hunt-layout { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(230px,.75fr); align-items:start; gap:24px; width:min(100%,900px); margin:28px auto 0; }
 .word-hunt-board-wrap,.word-hunt-words { padding:18px; border:1px solid #e3e8ef; border-radius:20px; background:#fff; box-shadow:0 14px 32px #43556d10; }

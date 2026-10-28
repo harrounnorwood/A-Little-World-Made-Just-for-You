@@ -323,14 +323,19 @@ function MessagesSection({ onBack, openedLetter, setOpenedLetter }: { onBack: ()
 }
 
 function VoiceMessageSection({ onBack }: { onBack: () => void }) {
-  const [audioError, setAudioError] = useState("");
+  const [audioErrors, setAudioErrors] = useState<string[]>([]);
 
-  return <PageTransition className="content-page"><SectionHeader title="A voice message for you" kicker="♡ a little something to hear" onBack={onBack} /><section className="voice-message-card">
+  return <PageTransition className="content-page"><SectionHeader title="Voice messages for you" kicker="♡ a little something to hear" onBack={onBack} /><section className="voice-message-card">
     <span className="voice-message-icon"><Mic size={27} /></span>
-    <h3>A message, in my own voice</h3>
+    <h3>Messages, in my own voice</h3>
     <p>{giftContent.voiceMessageDescription}</p>
-    {giftContent.voiceMessageUrl ? <audio className="voice-message-player" controls preload="metadata" src={giftContent.voiceMessageUrl} onError={() => setAudioError("The voice recording could not be loaded. Check the file path in gift-content.ts.")}>Your browser does not support audio playback.</audio> : <div className="voice-message-missing"><strong>Your recording goes here</strong><span>Add your audio file at <code>public/audio/voice-message.mp3</code>, then set <code>voiceMessageUrl</code> in <code>src/data/gift-content.ts</code> to <code>/audio/voice-message.mp3</code>.</span></div>}
-    {audioError && <p className="voice-message-error" role="alert">{audioError}</p>}
+    <div className="voice-message-list">
+      {giftContent.voiceMessages.map((message) => <div className="voice-message-item" key={message.url}>
+        <strong>{message.title}</strong>
+        <audio className="voice-message-player" controls preload="metadata" src={message.url} onError={() => setAudioErrors((errors) => [...errors, `${message.title}: The voice recording could not be loaded.`])}>Your browser does not support audio playback.</audio>
+      </div>)}
+    </div>
+    {audioErrors.map((error) => <p className="voice-message-error" role="alert" key={error}>{error}</p>)}
   </section></PageTransition>;
 }
 

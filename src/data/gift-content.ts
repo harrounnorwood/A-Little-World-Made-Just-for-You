@@ -32,7 +32,10 @@ export const giftContent = {
   playlistTitle: "Songs That Remind Me of You",
   playlistDescription: "A soundtrack for this little birthday world.",
   playlistUrl: "https://open.spotify.com/playlist/22CHRCHAFPxIkNdwI9Rgl4",
-  voiceMessageUrl: "",
+  voiceMessages: [
+    { title: "Voice message — Part 1", url: "/audio/part-1.m4a" },
+    { title: "Voice message — Part 2", url: "/audio/part-2.m4a" },
+  ],
   voiceMessageDescription: "Whenever you miss me, come listen to a little message from me.",
   wordHuntWords: ["HAPPY BIRTHDAY", "MAHAL", "HAPPY MONTHSARY", "BEAUTIFUL", "CUTIE", "POGANDA", "WIFEY", "PRETTY", "MY LOVE", "SWEET", "Tulips", "Soyti", "Lovelove", "Kitkat", "Buchay", "Scorpio", "Stitch", "Lily", "Cookies and Cream", "Black", "White", "Kahoy", "Nickolo", "Khysky", "Blue", "Araw-araw", "Doctor", "Nurse", "Hon", "Home."],
   finalHeadline: "Happy Birthday, {nickname}!",
