@@ -48,6 +48,11 @@ h2 em { color:var(--deep-rose); font-style:normal; }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; scroll-behavior:auto!important; } }
 
 .reveal-signature { margin-top:14px!important; color:#efc3cc!important; font-family:"Oooh Baby",cursive; font-size:1.4rem; }
+.led-switch { width:100%; padding:4px 0; border:0; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.led-switch h2 { margin:0; transition:transform .18s ease,text-shadow .18s ease; }
+.led-switch.is-pressed h2 { transform:scale(.985); }
+.led-hint { max-width:none!important; margin:-10px auto 18px!important; color:#91b6dd!important; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; }
+.led-switch:focus-visible { outline:2px solid #b9d9ff; outline-offset:8px; border-radius:12px; }
 .welcome-passcode-form { display:flex; flex-direction:column; align-items:center; gap:10px; width:min(100%,340px); margin:0 auto; }
 .welcome-passcode-form label { color:var(--muted); font-size:.75rem; }
 .passcode-input-wrap { position:relative; width:100%; }

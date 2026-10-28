@@ -39,6 +39,7 @@ export const giftContent = {
   voiceMessageDescription: "Whenever you miss me, come listen to a little message from me.",
   wordHuntWords: ["HAPPY BIRTHDAY", "MAHAL", "HAPPY MONTHSARY", "BEAUTIFUL", "CUTIE", "POGANDA", "WIFEY", "PRETTY", "MY LOVE", "SWEET", "Tulips", "Soyti", "Lovelove", "Kitkat", "Buchay", "Scorpio", "Stitch", "Lily", "Cookies and Cream", "Black", "White", "Kahoy", "Nickolo", "Khysky", "Blue", "Araw-araw", "Doctor", "Nurse", "Hon", "Home."],
   finalHeadline: "Happy Birthday, {nickname}!",
+  monthsaryHeadline: "Advance Happy 10th Monthsary, Wifey!",
   finalMessage: "I love you always",
   photoBookClosingTitle: "AND THAT'S MY BABY WIFEY.",
   photoBookClosingMessage: "From your childhood pictures to all your cute, girly, silly, angas, pogi, and pretty moments, every picture gives me another reason to love you. Maybe I started by admiring how beautiful you are, but somewhere along the way, I fell for every little side of you. And now, you're not just the girl I find pretty in pictures. You're my hev abi, my girlfriend, my wife, my favorite person, and the girl I want to keep making memories with. I LOVE YOU SO MUCH, MY LOVELOVEEE. ALWAYS REMEMBER THAT. 🫶🏻",

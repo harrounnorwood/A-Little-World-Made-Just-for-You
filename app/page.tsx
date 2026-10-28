@@ -516,8 +516,41 @@ function WordHuntSection({ onBack }: { onBack: () => void }) {
 }
 
 function BirthdayReveal({ onBack, onReplay }: { onBack: () => void; onReplay: () => void }) {
+  const [showMonthsary, setShowMonthsary] = useState(false);
+  const [isLedPressed, setIsLedPressed] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressClick = useRef(false);
   const finalHeadline = giftContent.finalHeadline.replace("{nickname}", giftContent.recipientNickname);
-  return <PageTransition className="reveal-page"><div className="reveal-stars" /><div className="confetti" aria-hidden="true">✦　♡　✧　✦　♡　✧</div><button className="reveal-back" onClick={onBack}><ArrowLeft size={16} /> Main menu</button><motion.div className="led-copy" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 1.1, type: "spring" }}><p className="eyebrow"><Cake size={15} /> today is all about you</p><h2>{finalHeadline}</h2><div className="led-line" /><p className="final-message">{giftContent.finalMessage}</p><p className="reveal-signature">With love, {giftContent.senderName} ♡</p></motion.div><div className="reveal-actions"><button className="outline-button" onClick={onReplay}><RotateCcw size={16} /> Replay reveal</button><button className="primary-button" onClick={onBack}>Keep exploring <Heart size={16} fill="currentColor" /></button></div></PageTransition>;
+
+  useEffect(() => () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  }, []);
+
+  const finishLedPress = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = null;
+    setIsLedPressed(false);
+  };
+
+  const startLedPress = () => {
+    suppressClick.current = false;
+    setIsLedPressed(true);
+    longPressTimer.current = setTimeout(() => {
+      suppressClick.current = true;
+      setShowMonthsary(true);
+    }, 650);
+  };
+
+  const switchLedMessage = () => {
+    finishLedPress();
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+    setShowMonthsary((visible) => !visible);
+  };
+
+  return <PageTransition className="reveal-page"><div className="reveal-stars" /><div className="confetti" aria-hidden="true">✦　♡　✧　✦　♡　✧</div><button className="reveal-back" onClick={onBack}><ArrowLeft size={16} /> Main menu</button><motion.div className="led-copy" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6, duration: 1.1, type: "spring" }}><p className="eyebrow"><Cake size={15} /> today is all about you</p><button type="button" className={`led-switch${isLedPressed ? " is-pressed" : ""}`} onClick={switchLedMessage} onPointerDown={startLedPress} onPointerUp={finishLedPress} onPointerCancel={finishLedPress} onPointerLeave={finishLedPress} aria-label={showMonthsary ? "Show the birthday LED message" : "Show the Advance Happy 10th Monthsary LED message"} aria-pressed={showMonthsary}><AnimatePresence mode="wait" initial={false}><motion.h2 key={showMonthsary ? "monthsary" : "birthday"} initial={{ opacity: 0, y: 18, filter: "blur(7px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -18, filter: "blur(7px)" }} transition={{ duration: 0.42 }}>{showMonthsary ? giftContent.monthsaryHeadline : finalHeadline}</motion.h2></AnimatePresence></button><div className="led-line" /><p className="led-hint">Tap to change the message · hold for monthsary</p><p className="final-message">{giftContent.finalMessage}</p><p className="reveal-signature">With love, {giftContent.senderName} ♡</p></motion.div><div className="reveal-actions"><button className="outline-button" onClick={onReplay}><RotateCcw size={16} /> Replay reveal</button><button className="primary-button" onClick={onBack}>Keep exploring <Heart size={16} fill="currentColor" /></button></div></PageTransition>;
 }
 
 function PhotoLightbox({ photos, index, onNavigate, onClose }: { photos: PhotoItem[]; index: number; onNavigate: (index: number) => void; onClose: () => void }) {
